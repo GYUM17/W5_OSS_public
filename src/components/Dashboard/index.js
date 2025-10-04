@@ -6,18 +6,35 @@ import Table from './Table';
 import Add from './Add';
 import Edit from './Edit';
 
-import { employeesData } from '../../data';
+import { employeeAPI } from '../../services/api';
 
 const Dashboard = ({ setIsAuthenticated }) => {
-  const [employees, setEmployees] = useState(employeesData);
+  const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const data = JSON.parse(localStorage.getItem('employees_data'));
-    if (data !== null && Object.keys(data).length !== 0) setEmployees(data);
+    loadEmployees();
   }, []);
+
+  const loadEmployees = async () => {
+    try {
+      setLoading(true);
+      const data = await employeeAPI.getAllEmployees();
+      setEmployees(data);
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: 'Failed to load employees data.',
+        showConfirmButton: true,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleEdit = id => {
     const [employee] = employees.filter(employee => employee.id === id);
@@ -34,24 +51,43 @@ const Dashboard = ({ setIsAuthenticated }) => {
       showCancelButton: true,
       confirmButtonText: 'Yes, delete it!',
       cancelButtonText: 'No, cancel!',
-    }).then(result => {
+    }).then(async (result) => {
       if (result.value) {
-        const [employee] = employees.filter(employee => employee.id === id);
+        try {
+          const [employee] = employees.filter(employee => employee.id === id);
+          await employeeAPI.deleteEmployee(id);
+          
+          Swal.fire({
+            icon: 'success',
+            title: 'Deleted!',
+            text: `${employee.firstName} ${employee.lastName}'s data has been deleted.`,
+            showConfirmButton: false,
+            timer: 1500,
+          });
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Deleted!',
-          text: `${employee.firstName} ${employee.lastName}'s data has been deleted.`,
-          showConfirmButton: false,
-          timer: 1500,
-        });
-
-        const employeesCopy = employees.filter(employee => employee.id !== id);
-        localStorage.setItem('employees_data', JSON.stringify(employeesCopy));
-        setEmployees(employeesCopy);
+          // 데이터 다시 로드
+          await loadEmployees();
+        } catch (error) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: 'Failed to delete employee.',
+            showConfirmButton: true,
+          });
+        }
       }
     });
   };
+
+  if (loading) {
+    return (
+      <div className="container">
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+          <h2>Loading employees...</h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container">
@@ -70,16 +106,14 @@ const Dashboard = ({ setIsAuthenticated }) => {
       )}
       {isAdding && (
         <Add
-          employees={employees}
-          setEmployees={setEmployees}
+          onEmployeeAdded={loadEmployees}
           setIsAdding={setIsAdding}
         />
       )}
       {isEditing && (
         <Edit
-          employees={employees}
           selectedEmployee={selectedEmployee}
-          setEmployees={setEmployees}
+          onEmployeeUpdated={loadEmployees}
           setIsEditing={setIsEditing}
         />
       )}

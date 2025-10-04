@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import Swal from 'sweetalert2';
+import { employeeAPI } from '../../services/api';
 
-const Edit = ({ employees, selectedEmployee, setEmployees, setIsEditing }) => {
+const Edit = ({ selectedEmployee, onEmployeeUpdated, setIsEditing }) => {
   const id = selectedEmployee.id;
 
   const [firstName, setFirstName] = useState(selectedEmployee.firstName);
@@ -10,7 +11,7 @@ const Edit = ({ employees, selectedEmployee, setEmployees, setIsEditing }) => {
   const [salary, setSalary] = useState(selectedEmployee.salary);
   const [date, setDate] = useState(selectedEmployee.date);
 
-  const handleUpdate = e => {
+  const handleUpdate = async e => {
     e.preventDefault();
 
     if (!firstName || !lastName || !email || !salary || !date) {
@@ -22,33 +23,35 @@ const Edit = ({ employees, selectedEmployee, setEmployees, setIsEditing }) => {
       });
     }
 
-    const employee = {
-      id,
-      firstName,
-      lastName,
-      email,
-      salary,
-      date,
-    };
+    try {
+      const employee = {
+        firstName,
+        lastName,
+        email,
+        salary,
+        date,
+      };
 
-    for (let i = 0; i < employees.length; i++) {
-      if (employees[i].id === id) {
-        employees.splice(i, 1, employee);
-        break;
-      }
+      await employeeAPI.updateEmployee(id, employee);
+      
+      Swal.fire({
+        icon: 'success',
+        title: 'Updated!',
+        text: `${employee.firstName} ${employee.lastName}'s data has been updated.`,
+        showConfirmButton: false,
+        timer: 1500,
+      });
+
+      setIsEditing(false);
+      onEmployeeUpdated(); // 부모 컴포넌트에서 데이터 다시 로드
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: 'Failed to update employee.',
+        showConfirmButton: true,
+      });
     }
-
-    localStorage.setItem('employees_data', JSON.stringify(employees));
-    setEmployees(employees);
-    setIsEditing(false);
-
-    Swal.fire({
-      icon: 'success',
-      title: 'Updated!',
-      text: `${employee.firstName} ${employee.lastName}'s data has been updated.`,
-      showConfirmButton: false,
-      timer: 1500,
-    });
   };
 
   return (

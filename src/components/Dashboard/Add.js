@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import Swal from 'sweetalert2';
+import { employeeAPI } from '../../services/api';
 
-const Add = ({ employees, setEmployees, setIsAdding }) => {
+const Add = ({ onEmployeeAdded, setIsAdding }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [salary, setSalary] = useState('');
   const [date, setDate] = useState('');
 
-  const handleAdd = e => {
+  const handleAdd = async e => {
     e.preventDefault();
 
     if (!firstName || !lastName || !email || !salary || !date) {
@@ -20,28 +21,35 @@ const Add = ({ employees, setEmployees, setIsAdding }) => {
       });
     }
 
-    const id = employees.length + 1;
-    const newEmployee = {
-      id,
-      firstName,
-      lastName,
-      email,
-      salary,
-      date,
-    };
+    try {
+      const newEmployee = {
+        firstName,
+        lastName,
+        email,
+        salary,
+        date,
+      };
 
-    employees.push(newEmployee);
-    localStorage.setItem('employees_data', JSON.stringify(employees));
-    setEmployees(employees);
-    setIsAdding(false);
+      await employeeAPI.createEmployee(newEmployee);
+      
+      Swal.fire({
+        icon: 'success',
+        title: 'Added!',
+        text: `${firstName} ${lastName}'s data has been Added.`,
+        showConfirmButton: false,
+        timer: 1500,
+      });
 
-    Swal.fire({
-      icon: 'success',
-      title: 'Added!',
-      text: `${firstName} ${lastName}'s data has been Added.`,
-      showConfirmButton: false,
-      timer: 1500,
-    });
+      setIsAdding(false);
+      onEmployeeAdded(); // 부모 컴포넌트에서 데이터 다시 로드
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: 'Failed to add employee.',
+        showConfirmButton: true,
+      });
+    }
   };
 
   return (
