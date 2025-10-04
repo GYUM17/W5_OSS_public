@@ -117,6 +117,9 @@ const Dashboard = ({ setIsAuthenticated }) => {
           setIsEditing={setIsEditing}
         />
       )}
+      <footer>
+        <p>&copy; 2024 Employee Management System. All rights reserved.</p>
+      </footer>
     </div>
   );
 };
