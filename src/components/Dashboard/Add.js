@@ -6,13 +6,14 @@ const Add = ({ onEmployeeAdded, setIsAdding }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [salary, setSalary] = useState('');
   const [date, setDate] = useState('');
 
   const handleAdd = async e => {
     e.preventDefault();
 
-    if (!firstName || !lastName || !email || !salary || !date) {
+    if (!firstName || !lastName || !email || !phone || !salary || !date) {
       return Swal.fire({
         icon: 'error',
         title: 'Error!',
@@ -26,6 +27,7 @@ const Add = ({ onEmployeeAdded, setIsAdding }) => {
         firstName,
         lastName,
         email,
+        phone,
         salary,
         date,
       };
@@ -79,6 +81,15 @@ const Add = ({ onEmployeeAdded, setIsAdding }) => {
           name="email"
           value={email}
           onChange={e => setEmail(e.target.value)}
+        />
+        <label htmlFor="phone">Phone</label>
+        <input
+          id="phone"
+          type="tel"
+          name="phone"
+          placeholder="010-1234-5678"
+          value={phone}
+          onChange={e => setPhone(e.target.value)}
         />
         <label htmlFor="salary">Salary ($)</label>
         <input
